@@ -1,0 +1,17 @@
+{
+  "domain": "lilo",
+  "name": "Prêt à Pousser Lilo",
+  "bluetooth": [
+    { "service_uuid": "c9d9bfe1-324c-4b79-bbaf-8a473e6540ec", "connectable": true },
+    { "local_name": "Lilo*", "connectable": true }
+  ],
+  "codeowners": ["@AlexandreVassard"],
+  "config_flow": true,
+  "dependencies": ["bluetooth_adapters"],
+  "documentation": "https://github.com/AlexandreVassard/ha-lilo",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/AlexandreVassard/ha-lilo/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

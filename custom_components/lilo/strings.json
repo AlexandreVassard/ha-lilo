@@ -1,0 +1,30 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Choose the Lilo to add.",
+        "data": { "address": "Device" }
+      },
+      "bluetooth_confirm": {
+        "description": "Add {name}?"
+      }
+    },
+    "abort": {
+      "already_configured": "This Lilo is already configured.",
+      "no_devices_found": "No Lilo found in Bluetooth range. Close the Prêt à Pousser app, which holds the only Bluetooth connection, and try again."
+    }
+  },
+  "entity": {
+    "select": {
+      "mode": {
+        "name": "Mode",
+        "state": { "auto": "Automatic", "manual": "Manual" }
+      }
+    },
+    "time": {
+      "start": { "name": "Light start" },
+      "end": { "name": "Light end" }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Choisissez le Lilo à ajouter.",
+        "data": { "address": "Appareil" }
+      },
+      "bluetooth_confirm": {
+        "description": "Ajouter {name} ?"
+      }
+    },
+    "abort": {
+      "already_configured": "Ce Lilo est déjà configuré.",
+      "no_devices_found": "Aucun Lilo à portée Bluetooth. Fermez l'application Prêt à Pousser, qui monopolise la connexion Bluetooth, puis réessayez."
+    }
+  },
+  "entity": {
+    "select": {
+      "mode": {
+        "name": "Mode",
+        "state": { "auto": "Automatique", "manual": "Manuel" }
+      }
+    },
+    "time": {
+      "start": { "name": "Allumage" },
+      "end": { "name": "Extinction" }
+    }
+  }
+}
