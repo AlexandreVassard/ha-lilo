@@ -18,13 +18,24 @@ en charge.
 | `select.lilo…_mode` | Mode automatique ou manuel |
 | `time.lilo…_allumage` | Heure d'allumage quotidienne |
 | `time.lilo…_extinction` | Heure d'extinction quotidienne |
+| `button.lilo…_actualiser` | Relit le Lilo (après un changement fait dans l'application) |
 
 En mode automatique, le Lilo rétablit lui-même ses horaires : modifier une
 heure fait donc passer en mode manuel, comme dans l'application. Choisir
 *Automatique* applique le préréglage de l'application (100 %, 06:00–22:00).
 
-L'horloge interne du Lilo est resynchronisée sur celle de Home Assistant à
-chaque relevé (toutes les 5 minutes) dès qu'elle dérive de plus d'une minute.
+Les LED du Lilo clignotent à chaque connexion Bluetooth. L'intégration ne
+l'interroge donc pas en continu ; elle ne s'y connecte que :
+
+- au démarrage de Home Assistant ;
+- à chaque modification faite depuis Home Assistant ;
+- une fois par jour, une minute après l'heure d'extinction, quand le
+  clignotement passe inaperçu ;
+- sur appui du bouton *Actualiser*.
+
+Un changement fait dans l'application officielle n'apparaît donc dans Home
+Assistant qu'au relevé suivant. À chaque connexion, l'horloge interne du Lilo
+est recalée sur celle de Home Assistant si elle a dérivé de plus d'une minute.
 
 « Allumée » signifie que la lampe est active avec une intensité non nulle : le
 Lilo ne s'éclaire réellement qu'entre l'heure d'allumage et l'heure

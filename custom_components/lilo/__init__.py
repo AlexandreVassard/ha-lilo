@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import LiloConfigEntry, LiloCoordinator
 
-PLATFORMS = [Platform.LIGHT, Platform.SELECT, Platform.TIME]
+PLATFORMS = [Platform.BUTTON, Platform.LIGHT, Platform.SELECT, Platform.TIME]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: LiloConfigEntry) -> bool:

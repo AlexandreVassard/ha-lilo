@@ -89,13 +89,7 @@ class LiloDevice:
             client = await self._connect(ble_device)
             try:
                 if now is not None:
-                    clock = int.from_bytes(await client.read_gatt_char(CHAR_CLOCK), "little")
-                    drift = abs(clock - _time_to_seconds(now))
-                    if min(drift, 86400 - drift) > CLOCK_TOLERANCE:
-                        _LOGGER.debug("Resyncing %s clock (drift %ss)", self._name, drift)
-                        await client.write_gatt_char(
-                            CHAR_CLOCK, _time_to_seconds(now).to_bytes(4, "little"), response=True
-                        )
+                    await self._sync_clock(client, now)
                 return await self._read(client)
             finally:
                 await client.disconnect()
@@ -104,6 +98,7 @@ class LiloDevice:
         self,
         ble_device: BLEDevice,
         *,
+        now: time | None = None,
         mode: int | None = None,
         brightness: int | None = None,
         start: time | None = None,
@@ -112,6 +107,7 @@ class LiloDevice:
         """Write the given settings and return the resulting state.
 
         Changing the schedule switches to manual mode unless ``mode`` is given.
+        The clock is resynced to ``now`` in the same connection.
         """
         if mode is None and (start is not None or end is not None):
             mode = MODE_MANUAL
@@ -129,12 +125,23 @@ class LiloDevice:
         async with self._lock:
             client = await self._connect(ble_device)
             try:
+                if now is not None:
+                    await self._sync_clock(client, now)
                 for chars, data in payloads:
                     for char in chars:
                         await client.write_gatt_char(char, data, response=True)
                 return await self._read(client)
             finally:
                 await client.disconnect()
+
+    async def _sync_clock(self, client: BleakClientWithServiceCache, now: time) -> None:
+        clock = int.from_bytes(await client.read_gatt_char(CHAR_CLOCK), "little")
+        drift = abs(clock - _time_to_seconds(now))
+        if min(drift, 86400 - drift) > CLOCK_TOLERANCE:
+            _LOGGER.debug("Resyncing %s clock (drift %ss)", self._name, drift)
+            await client.write_gatt_char(
+                CHAR_CLOCK, _time_to_seconds(now).to_bytes(4, "little"), response=True
+            )
 
     async def _read(self, client: BleakClientWithServiceCache) -> LiloState:
         async def read_int(char: str) -> int:

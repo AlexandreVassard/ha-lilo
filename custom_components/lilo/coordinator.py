@@ -1,8 +1,9 @@
-"""Polling coordinator for the Lilo integration."""
+"""Coordinator for the Lilo integration."""
 
 from __future__ import annotations
 
-from datetime import time
+from collections.abc import Callable
+from datetime import datetime, time, timedelta
 import logging
 
 from bleak.exc import BleakError
@@ -12,10 +13,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import DEFAULT_BRIGHTNESS, DOMAIN, UPDATE_INTERVAL
+from .const import DAILY_REFRESH_DELAY, DEFAULT_BRIGHTNESS, DOMAIN
 from .lilo import LiloDevice, LiloState
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,7 +26,11 @@ type LiloConfigEntry = ConfigEntry[LiloCoordinator]
 
 
 class LiloCoordinator(DataUpdateCoordinator[LiloState]):
-    """Reads the Lilo every few minutes and forwards writes to it."""
+    """Talks to the Lilo as rarely as possible: its LEDs blink on every connection.
+
+    Besides writes and manual refreshes, it reads the Lilo (and resyncs its
+    clock) once a day, right after the light turns off.
+    """
 
     config_entry: LiloConfigEntry
 
@@ -34,12 +40,13 @@ class LiloCoordinator(DataUpdateCoordinator[LiloState]):
             _LOGGER,
             config_entry=entry,
             name=f"{DOMAIN}_{entry.data[CONF_ADDRESS]}",
-            update_interval=UPDATE_INTERVAL,
         )
         self.address: str = entry.data[CONF_ADDRESS]
         self.device = LiloDevice(entry.title)
         # Brightness restored by a plain "turn on".
         self.last_brightness = DEFAULT_BRIGHTNESS
+        self._unsub_daily: Callable[[], None] | None = None
+        entry.async_on_unload(self._cancel_daily_refresh)
 
     def _ble_device(self):
         ble_device = bluetooth.async_ble_device_from_address(
@@ -52,7 +59,30 @@ class LiloCoordinator(DataUpdateCoordinator[LiloState]):
     def _remember(self, state: LiloState) -> LiloState:
         if state.brightness:
             self.last_brightness = state.brightness
+        self._schedule_daily_refresh(state.end)
         return state
+
+    def _cancel_daily_refresh(self) -> None:
+        if self._unsub_daily:
+            self._unsub_daily()
+            self._unsub_daily = None
+
+    def _schedule_daily_refresh(self, end: time) -> None:
+        self._cancel_daily_refresh()
+        now = dt_util.now()
+        when = datetime.combine(now.date(), end, now.tzinfo) + DAILY_REFRESH_DELAY
+        while when <= now:
+            when += timedelta(days=1)
+        self._unsub_daily = async_track_point_in_time(
+            self.hass, self._async_daily_refresh, when
+        )
+
+    async def _async_daily_refresh(self, _now: datetime) -> None:
+        self._unsub_daily = None
+        await self.async_refresh()
+        if self._unsub_daily is None and self.data is not None:
+            # The refresh failed: try again tomorrow.
+            self._schedule_daily_refresh(self.data.end)
 
     async def _async_update_data(self) -> LiloState:
         ble_device = self._ble_device()
@@ -75,6 +105,7 @@ class LiloCoordinator(DataUpdateCoordinator[LiloState]):
         try:
             state = await self.device.write(
                 self._ble_device(),
+                now=dt_util.now().time(),
                 mode=mode,
                 brightness=brightness,
                 start=start,

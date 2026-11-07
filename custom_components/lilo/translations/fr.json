@@ -16,6 +16,9 @@
     }
   },
   "entity": {
+    "button": {
+      "refresh": { "name": "Actualiser" }
+    },
     "select": {
       "mode": {
         "name": "Mode",
