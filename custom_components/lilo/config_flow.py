@@ -10,10 +10,23 @@ from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
 )
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.const import CONF_ADDRESS
+from homeassistant.core import callback
+from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
 
-from .const import DOMAIN
+from .const import (
+    CONF_REFRESH_AT,
+    DEFAULT_REFRESH_AT,
+    DOMAIN,
+    REFRESH_AT_END,
+    REFRESH_AT_START,
+)
 from .lilo import SERVICE_UUID
 
 
@@ -25,6 +38,12 @@ class LiloConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._discovery_info: BluetoothServiceInfoBleak | None = None
         self._discovered: dict[str, str] = {}
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> LiloOptionsFlow:
+        """Return the options flow."""
+        return LiloOptionsFlow()
 
     async def async_step_bluetooth(
         self, discovery_info: BluetoothServiceInfoBleak
@@ -80,6 +99,32 @@ class LiloConfigFlow(ConfigFlow, domain=DOMAIN):
                             address: f"{name} ({address})"
                             for address, name in self._discovered.items()
                         }
+                    )
+                }
+            ),
+        )
+
+
+class LiloOptionsFlow(OptionsFlowWithReload):
+    """Choose when the daily refresh runs."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        current = self.config_entry.options.get(CONF_REFRESH_AT, DEFAULT_REFRESH_AT)
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_REFRESH_AT, default=current): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[REFRESH_AT_START, REFRESH_AT_END],
+                            translation_key=CONF_REFRESH_AT,
+                        )
                     )
                 }
             ),

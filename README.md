@@ -29,8 +29,9 @@ l'interroge donc pas en continu ; elle ne s'y connecte que :
 
 - au démarrage de Home Assistant ;
 - à chaque modification faite depuis Home Assistant ;
-- une fois par jour, une minute après l'heure d'extinction, quand le
-  clignotement passe inaperçu ;
+- une fois par jour, une minute après l'heure d'extinction (ou d'allumage,
+  au choix dans les options de l'intégration), pour que le clignotement passe
+  inaperçu ;
 - sur appui du bouton *Actualiser*.
 
 Un changement fait dans l'application officielle n'apparaît donc dans Home

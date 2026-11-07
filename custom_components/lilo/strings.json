@@ -15,6 +15,19 @@
       "no_devices_found": "No Lilo found in Bluetooth range. Close the Prêt à Pousser app, which holds the only Bluetooth connection, and try again."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "data": { "refresh_at": "Daily refresh" },
+        "data_description": { "refresh_at": "Home Assistant reads the Lilo and resyncs its clock once a day, one minute after this moment. The Lilo LEDs blink during the connection." }
+      }
+    }
+  },
+  "selector": {
+    "refresh_at": {
+      "options": { "start": "When the light turns on", "end": "When the light turns off" }
+    }
+  },
   "entity": {
     "button": {
       "refresh": { "name": "Refresh" }

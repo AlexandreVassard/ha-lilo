@@ -17,7 +17,14 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import DAILY_REFRESH_DELAY, DEFAULT_BRIGHTNESS, DOMAIN
+from .const import (
+    CONF_REFRESH_AT,
+    DAILY_REFRESH_DELAY,
+    DEFAULT_BRIGHTNESS,
+    DEFAULT_REFRESH_AT,
+    DOMAIN,
+    REFRESH_AT_START,
+)
 from .lilo import LiloDevice, LiloState
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,7 +36,7 @@ class LiloCoordinator(DataUpdateCoordinator[LiloState]):
     """Talks to the Lilo as rarely as possible: its LEDs blink on every connection.
 
     Besides writes and manual refreshes, it reads the Lilo (and resyncs its
-    clock) once a day, right after the light turns off.
+    clock) once a day, right after the light turns on or off.
     """
 
     config_entry: LiloConfigEntry
@@ -59,7 +66,7 @@ class LiloCoordinator(DataUpdateCoordinator[LiloState]):
     def _remember(self, state: LiloState) -> LiloState:
         if state.brightness:
             self.last_brightness = state.brightness
-        self._schedule_daily_refresh(state.end)
+        self._schedule_daily_refresh(state)
         return state
 
     def _cancel_daily_refresh(self) -> None:
@@ -67,12 +74,15 @@ class LiloCoordinator(DataUpdateCoordinator[LiloState]):
             self._unsub_daily()
             self._unsub_daily = None
 
-    def _schedule_daily_refresh(self, end: time) -> None:
+    def _schedule_daily_refresh(self, state: LiloState) -> None:
         self._cancel_daily_refresh()
+        refresh_at = self.config_entry.options.get(CONF_REFRESH_AT, DEFAULT_REFRESH_AT)
+        anchor = state.start if refresh_at == REFRESH_AT_START else state.end
         now = dt_util.now()
-        when = datetime.combine(now.date(), end, now.tzinfo) + DAILY_REFRESH_DELAY
+        when = datetime.combine(now.date(), anchor, now.tzinfo) + DAILY_REFRESH_DELAY
         while when <= now:
             when += timedelta(days=1)
+        _LOGGER.debug("Next daily refresh of %s at %s", self.address, when)
         self._unsub_daily = async_track_point_in_time(
             self.hass, self._async_daily_refresh, when
         )
@@ -82,7 +92,7 @@ class LiloCoordinator(DataUpdateCoordinator[LiloState]):
         await self.async_refresh()
         if self._unsub_daily is None and self.data is not None:
             # The refresh failed: try again tomorrow.
-            self._schedule_daily_refresh(self.data.end)
+            self._schedule_daily_refresh(self.data)
 
     async def _async_update_data(self) -> LiloState:
         ble_device = self._ble_device()

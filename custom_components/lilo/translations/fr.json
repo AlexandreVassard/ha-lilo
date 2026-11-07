@@ -15,6 +15,19 @@
       "no_devices_found": "Aucun Lilo à portée Bluetooth. Fermez l'application Prêt à Pousser, qui monopolise la connexion Bluetooth, puis réessayez."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "data": { "refresh_at": "Relevé quotidien" },
+        "data_description": { "refresh_at": "Home Assistant relit le Lilo et recale son horloge une fois par jour, une minute après ce moment. Les LED du Lilo clignotent pendant la connexion." }
+      }
+    }
+  },
+  "selector": {
+    "refresh_at": {
+      "options": { "start": "À l'allumage", "end": "À l'extinction" }
+    }
+  },
   "entity": {
     "button": {
       "refresh": { "name": "Actualiser" }
