@@ -99,3 +99,11 @@ Chaque réglage est stocké en double, et l'application écrit les deux copies.
 ```sh
 ssh homeassistant 'bash -s' < tools/snapshot.sh ED:E7:3E:59:7D:D6
 ```
+
+## Logos
+
+Le dossier `custom_components/lilo/brand` contient le logo et l'icône de
+Prêt à Pousser, repris de [pretapousser.com](https://pretapousser.com/) pour
+illustrer l'intégration (Home Assistant 2026.3 ou plus récent). Ce sont des
+marques de Prêt à Pousser ; ce projet n'est ni affilié à Prêt à Pousser ni
+soutenu par la marque.
